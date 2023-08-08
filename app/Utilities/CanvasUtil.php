@@ -293,6 +293,12 @@ class CanvasUtil extends Util
             throw new \Exception('API request failed: ' . $error->getMessage());
         }
     }
+    /**
+     * List Courses from Canvas per User
+     * @param string $userId
+     * @return JSON decoded
+     * @throws \Exception
+     **/
     public static function listCoursesForUser($userId)
     {
         $baseUrl = env('CANVAS_API');
@@ -312,6 +318,7 @@ class CanvasUtil extends Util
             throw new \Exception('API request failed: ' . $error->getMessage());
         }
     }
+
     /**
      * List Course Assignments from Canvas
      *
@@ -355,7 +362,6 @@ class CanvasUtil extends Util
      * fields.
      *
      * */
-
     public function createNewCourse(CanvasCourse $course, $accountId = 'self/')
     {
         $baseUrl = env('CANVAS_API');
