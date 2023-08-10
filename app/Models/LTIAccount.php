@@ -2,7 +2,7 @@
 // This is a model for an LTI account as defined by the Canvas API
 use Http\Controllers\LtiController\getLtiAccount;
 
-class LTIAccount
+class Provider
 {
     private $id;
     private $name;

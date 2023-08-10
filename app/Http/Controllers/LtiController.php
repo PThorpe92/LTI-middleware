@@ -16,12 +16,12 @@ class LtiController extends Controller
     }
 
     // return the Canvas LTI account associated with the context
-    public function getLtiAccount()
+    public function getCanvasLtiAccount()
     {
         $tool = LtiTool::getLtiTool();
         $platform = $tool->getPlatformById(session('platform_id'));
         $client = new Client(['base_uri' => $platform->getIssuer()]);
-        $response = $client->request('GET', '/api/v1/accounts/' . $platform->getIssuer());
+        $response = $client->get('/api/v1/accounts/' . $platform->getIssuer());
         if ($response->getStatusCode() == 200) {
             $account = json_decode($response->getBody());
         }

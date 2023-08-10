@@ -2,15 +2,47 @@
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use App\Http\Controllers\LtiController;
 
-class CanvasUtil extends Util
+class CanvasUtil extends ProviderUtil
 {
+    /*
+   * From Canvas, we get this information, this will be useful
+   * because even though we are not speaking to canvas via LTI, we
+   * will be modeling our providers after the LTI model.
+   ***********************************************************
+  the ID of the Account object
+  "id": 2,
+   The display name of the account
+  "name": "Canvas Account",
+   The UUID of the account
+  "uuid": "WvAHhY5FINzq5IyRIJybGeiXyFkG3SqHUPb7jZY5",
+   The account's parent ID, or null if this is the root account
+  "parent_account_id": 1,
+   The ID of the root account, or null if this is the root account
+  "root_account_id": 1,
+   The state of the account. Can be 'active' or 'deleted'.
+  "workflow_state": "active"
+}
+*/
+    public function __construct()
+    {
+        $controller = new LtiController();
+        $info = $controller->getCanvasLtiAccount();
+        $this->ltiAccount = $info['root_account_id'];
+        $this->providerId = $info['id'];
+        $this->providerName = $info['name'];
+    }
+
     /**
      * Get a list of users from Canvas
      *
      * @param? string
      * @returns JSON decoded
      * @throws \Exception
+     *
+     * AccountId can be accessed via the field in the class,
+     * but it seems most of the time it will be self.
      */
     public static function listUsers($accountId = 'self/')
     {
@@ -25,7 +57,7 @@ class CanvasUtil extends Util
         ]);
 
         try {
-            $response = $client->get('accounts/' . $accountId . 'users');
+            $response = $client->get($baseUrl . 'accounts/' . $accountId . 'users');
 
             if ($response->getStatusCode() == 200) {
                 return json_decode($response->getBody());
@@ -56,7 +88,7 @@ class CanvasUtil extends Util
             ],
         ]);
         try {
-            $response = $client->get('users/' . $userId);
+            $response = $client->get($baseUrl . 'users/' . $userId);
 
             if ($response->getStatusCode() == 200) {
                 return json_decode($response->getBody());
@@ -94,14 +126,14 @@ class CanvasUtil extends Util
             ],
             'force_validations' => true,
         ];
-        $canvasApi = env('CANVAS_API');
-        $canvasApiKey = env('CANVAS_API_KEY');
+        $baseUrl = env('CANVAS_API');
+        $apiKey = env('CANVAS_API_KEY');
 
         $client = new Client([
-            'Authorization' => 'Bearer ' . $canvasApiKey,
+            'Authorization' => 'Bearer ' . $apiKey,
         ]);
         try {
-            $response = $client->post($canvasApi . "accounts/self/users/", $userData);
+            $response = $client->post($baseUrl . "accounts/self/users/", $userData);
 
             if ($response->getStatusCode() == 200) {
                 return json_decode($response->getBody());
@@ -191,12 +223,13 @@ class CanvasUtil extends Util
             throw new \Exception('API request failed: ' . $error->getMessage());
         }
     }
+
     /**
      * Get Todo Items Count from Canvas
      * @param? string $account (default self)
      * @return JSON decoded
      *
-     */
+     **/
     public static function getTodoItemsCount($account = 'self/')
     {
         $baseUrl = env('CANVAS_API');
@@ -341,38 +374,6 @@ class CanvasUtil extends Util
         ]);
         try {
             $response = $client->get($baseUrl . 'courses/' . $courseId . '/users/' . $userId . 'progress');
-            if ($response->getStatusCode() == 200) {
-                return json_decode($response->getBody());
-            } else {
-                throw new \Exception('API request failed with status code: ' . $response->getStatusCode());
-            }
-        } catch (RequestException $error) {
-            throw new \Exception('API request failed: ' . $error->getMessage());
-        }
-    }
-
-    /**
-     * Create new course in Canvas
-     * @param Course $course
-     * @return JSON decoded
-     * @throws \Exception
-     *
-     * There are too many required parameters to accept anything
-     * but a Course object already instantiated with all the required
-     * fields.
-     *
-     * */
-    public function createNewCourse(CanvasCourse $course, $accountId = 'self/')
-    {
-        $baseUrl = env('CANVAS_API');
-        $apiKey = env('CANVAS_API_KEY');
-
-        $client = new Client([
-            'Authorization' => 'Bearer ' . $apiKey,
-        ]);
-        try {
-            $response = $client->post($baseUrl . 'accounts/' . $accountId . 'courses/' . $course->toJson());
-
             if ($response->getStatusCode() == 200) {
                 return json_decode($response->getBody());
             } else {
